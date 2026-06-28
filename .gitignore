@@ -1,0 +1,11 @@
+node_modules
+.turbo
+dist
+coverage
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Scratch space for inspecting upstream repos during development.
+vendor/
