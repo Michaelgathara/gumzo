@@ -15,6 +15,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@gumzo/domain": "workspace:*",
+        "@gumzo/inbox": "workspace:*",
         "solid-js": "1.9.10",
       },
       "devDependencies": {
@@ -28,6 +29,17 @@
       "version": "0.1.0",
       "dependencies": {
         "zod": "4.1.8",
+      },
+      "devDependencies": {
+        "@types/bun": "1.3.14",
+        "typescript": "5.8.2",
+      },
+    },
+    "packages/inbox": {
+      "name": "@gumzo/inbox",
+      "version": "0.1.0",
+      "dependencies": {
+        "@gumzo/domain": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "1.3.14",
@@ -125,6 +137,8 @@
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.12", "", { "os": "win32", "cpu": "x64" }, "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA=="],
 
     "@gumzo/domain": ["@gumzo/domain@workspace:packages/domain"],
+
+    "@gumzo/inbox": ["@gumzo/inbox@workspace:packages/inbox"],
 
     "@gumzo/web": ["@gumzo/web@workspace:apps/web"],
 

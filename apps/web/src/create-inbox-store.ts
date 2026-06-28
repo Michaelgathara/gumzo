@@ -1,13 +1,17 @@
-import {
-  sampleInboxState,
-  selectContext,
-  submitInboxMessage,
-} from "@gumzo/domain";
-import { createMemo, createSignal } from "solid-js";
+import { createMemoryInboxRegistry, type InboxRegistry } from "@gumzo/inbox";
+import { createMemo, createSignal, onCleanup } from "solid-js";
 
-export function createInboxStore() {
-  const [inbox, setInbox] = createSignal(sampleInboxState);
+export function createInboxStore(
+  registry: InboxRegistry = createMemoryInboxRegistry(),
+) {
+  const [inbox, setInbox] = createSignal(registry.getSnapshot());
   const [draft, setDraft] = createSignal("");
+
+  const unsubscribe = registry.subscribe((snapshot) => {
+    setInbox(snapshot);
+  });
+
+  onCleanup(unsubscribe);
 
   const activeContext = createMemo(() => {
     const current = inbox();
@@ -22,7 +26,7 @@ export function createInboxStore() {
   const canSubmit = createMemo(() => draft().trim().length > 0);
 
   function focusContext(contextId: string) {
-    setInbox((current) => selectContext(current, contextId));
+    registry.focusContext(contextId);
   }
 
   function submitDraft() {
@@ -32,7 +36,7 @@ export function createInboxStore() {
       return;
     }
 
-    setInbox((current) => submitInboxMessage(current, message));
+    registry.submitMessage(message);
     setDraft("");
   }
 
