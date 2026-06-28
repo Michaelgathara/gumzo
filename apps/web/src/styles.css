@@ -2,7 +2,6 @@
   color-scheme: dark;
   --bg: #07131a;
   --bg-elevated: rgba(11, 25, 33, 0.78);
-  --bg-panel: rgba(16, 35, 46, 0.92);
   --border: rgba(154, 191, 196, 0.18);
   --border-strong: rgba(154, 191, 196, 0.3);
   --text: #edf6f3;
@@ -177,6 +176,7 @@ textarea {
 .hero-card p,
 .context-card p,
 .route-callout p,
+.pending-card p,
 .message p,
 .composer-copy p,
 .empty-copy {
@@ -223,7 +223,7 @@ textarea {
 .context-card-footer,
 .thread-header,
 .message-meta,
-.composer-frame {
+.composer-actions {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -249,11 +249,36 @@ textarea {
   gap: 12px;
 }
 
+.context-card-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .context-card {
   border: 1px solid rgba(154, 191, 196, 0.12);
   border-radius: 22px;
   background: rgba(8, 18, 24, 0.72);
   padding: 16px;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.context-card-button:hover .context-card,
+.context-card-button:focus-visible .context-card,
+.context-card-active .context-card {
+  border-color: rgba(121, 217, 198, 0.34);
+  background: rgba(10, 24, 33, 0.92);
+  transform: translateY(-1px);
+}
+
+.context-card-button:focus-visible {
+  outline: none;
 }
 
 .context-card-header h3 {
@@ -263,9 +288,9 @@ textarea {
 
 .context-card-header p,
 .route-callout p:last-child,
+.pending-card p:last-child,
 .message p,
-.empty-copy,
-.composer-placeholder {
+.empty-copy {
   color: var(--text-muted);
   line-height: 1.55;
 }
@@ -321,6 +346,13 @@ textarea {
   font-size: clamp(2rem, 3vw, 3rem);
 }
 
+.thread-summary {
+  margin: 10px 0 0;
+  max-width: 48rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
 .header-badges {
   display: flex;
   gap: 10px;
@@ -336,6 +368,7 @@ textarea {
   background: rgba(255, 196, 116, 0.1);
 }
 
+.pending-card,
 .route-callout {
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -351,6 +384,12 @@ textarea {
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.route-headline {
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  color: var(--text);
 }
 
 .transcript {
@@ -390,41 +429,82 @@ textarea {
 }
 
 .composer-shell {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 18px;
   border-top: 1px solid var(--border);
   padding-top: 18px;
 }
 
 .composer-copy h3 {
-  font-size: 1.45rem;
   margin-top: 4px;
+  font-size: 1.45rem;
 }
 
-.composer-frame {
-  min-width: min(100%, 28rem);
-  align-items: center;
+.composer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.composer-input {
+  width: 100%;
+  min-height: 8.5rem;
+  resize: vertical;
   border: 1px solid var(--border-strong);
   border-radius: 24px;
   background: rgba(7, 17, 23, 0.86);
-  padding: 14px 14px 14px 18px;
+  color: var(--text);
+  padding: 18px;
 }
 
-.composer-frame button {
-  border: 0;
+.composer-input::placeholder {
+  color: rgba(150, 175, 180, 0.8);
+}
+
+.composer-input:focus {
+  outline: 1px solid rgba(121, 217, 198, 0.28);
+  border-color: rgba(121, 217, 198, 0.34);
+}
+
+.composer-actions {
+  align-items: flex-end;
+}
+
+.suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.suggestion-chip,
+.submit-button {
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--accent), #b3f2d4);
-  color: #062029;
-  cursor: pointer;
   font-family:
     "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.78rem;
-  font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 12px 14px;
   text-transform: uppercase;
+}
+
+.suggestion-chip {
+  border: 1px solid var(--border);
+  background: rgba(7, 17, 23, 0.86);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 12px 14px;
+}
+
+.submit-button {
+  border: 0;
+  background: linear-gradient(135deg, var(--accent), #b3f2d4);
+  color: #062029;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 12px 14px;
+}
+
+.submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .eyebrow {
@@ -460,7 +540,7 @@ textarea {
 
   .topbar,
   .thread-header,
-  .composer-shell,
+  .composer-actions,
   .context-card-footer {
     flex-direction: column;
   }
@@ -469,9 +549,8 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .composer-frame {
-    min-width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+  .suggestion-row,
+  .submit-button {
+    width: 100%;
   }
 }

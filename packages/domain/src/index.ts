@@ -1,15 +1,20 @@
 export {
+  getActiveContext,
   getContextStateLabel,
+  getRouteStrategyLabel,
   groupContextsByRailBucket,
-  inboxViewModelSchema,
-  railBucketKeySchema,
+  inboxStateSchema,
+  routeStrategySchema,
+  selectContext,
+  submitInboxMessage,
+  type ContextState,
+  type ContextSummary,
+  type ContextThread,
+  type InboxState,
+  type PendingItem,
+  type RailBucketKey,
+  type RouteDecision,
+  type RouteStrategy,
+  type TranscriptTurn,
 } from "./inbox";
-export type {
-  ContextState,
-  ContextSummary,
-  InboxViewModel,
-  RailBucketKey,
-  RouteDecision,
-  TranscriptTurn,
-} from "./inbox";
-export { sampleInboxViewModel } from "./demo-data";
+export { sampleInboxState } from "./demo-data";

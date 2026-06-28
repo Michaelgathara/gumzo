@@ -1,10 +1,12 @@
 import {
   getContextStateLabel,
+  getRouteStrategyLabel,
   groupContextsByRailBucket,
-  sampleInboxViewModel,
   type RailBucketKey,
 } from "@gumzo/domain";
 import { For, createMemo } from "solid-js";
+
+import { createInboxStore } from "./create-inbox-store";
 
 type RailSection = {
   key: RailBucketKey;
@@ -40,15 +42,27 @@ const railSections: RailSection[] = [
   },
 ];
 
+const demoPrompts = [
+  "Use Google for the alpha.",
+  "Go back to the Japan trip and optimize the Tokyo hotel choices.",
+  "New: sketch a pricing page information architecture",
+] as const;
+
 export function App() {
+  const inbox = createInboxStore();
   const rail = createMemo(() =>
-    groupContextsByRailBucket(sampleInboxViewModel.contexts),
+    groupContextsByRailBucket(inbox.inbox().contexts),
   );
-  const activeContext = createMemo(() =>
-    sampleInboxViewModel.contexts.find(
-      (context) => context.id === sampleInboxViewModel.activeContextId,
-    ),
+  const activeContext = inbox.activeContext;
+  const routeDecision = createMemo(() => inbox.inbox().routeDecision);
+  const routeTarget = createMemo(() =>
+    inbox
+      .inbox()
+      .contexts.find(
+        (context) => context.id === routeDecision().targetContextId,
+      ),
   );
+  const pendingPrompt = createMemo(() => activeContext()?.pendingItems[0]);
 
   return (
     <div class="app-shell">
@@ -63,7 +77,7 @@ export function App() {
 
         <div class="topbar-meta">
           <span class="meta-pill">OpenCode-aligned runtime</span>
-          <span class="meta-pill meta-pill-muted">Scaffold slice 01</span>
+          <span class="meta-pill meta-pill-muted">Scaffold slice 02</span>
         </div>
       </header>
 
@@ -79,15 +93,12 @@ export function App() {
             </p>
             <div class="hero-grid">
               <Signal
-                label="Route strategy"
-                value={sampleInboxViewModel.routeDecision.strategy.replaceAll(
-                  "-",
-                  " ",
-                )}
+                label="Last route"
+                value={getRouteStrategyLabel(routeDecision().strategy)}
               />
               <Signal
                 label="Confidence"
-                value={`${Math.round(sampleInboxViewModel.routeDecision.confidence * 100)}%`}
+                value={`${Math.round(routeDecision().confidence * 100)}%`}
               />
             </div>
           </section>
@@ -106,37 +117,52 @@ export function App() {
                 <div class="context-list">
                   {rail()[section.key].length > 0 ? (
                     <For each={rail()[section.key]}>
-                      {(context) => (
-                        <article class="context-card">
-                          <div class="context-card-header">
-                            <div>
-                              <h3>{context.title}</h3>
-                              <p>{context.summary}</p>
-                            </div>
-                            <span class="state-pill">
-                              {getContextStateLabel(context.state)}
-                            </span>
-                          </div>
+                      {(context) => {
+                        const isActive = createMemo(
+                          () => activeContext()?.id === context.id,
+                        );
 
-                          <div class="context-card-footer">
-                            <div class="chip-row">
-                              {context.scope.workspace ? (
-                                <span class="scope-chip">
-                                  {context.scope.workspace}
+                        return (
+                          <button
+                            class="context-card-button"
+                            classList={{
+                              "context-card-active": isActive(),
+                            }}
+                            type="button"
+                            onClick={() => inbox.focusContext(context.id)}
+                          >
+                            <article class="context-card">
+                              <div class="context-card-header">
+                                <div>
+                                  <h3>{context.title}</h3>
+                                  <p>{context.summary}</p>
+                                </div>
+                                <span class="state-pill">
+                                  {getContextStateLabel(context.state)}
                                 </span>
-                              ) : null}
-                              <For each={context.scope.tools}>
-                                {(tool) => (
-                                  <span class="scope-chip">{tool}</span>
-                                )}
-                              </For>
-                            </div>
-                            <span class="timestamp">
-                              {formatTimestamp(context.updatedAt)}
-                            </span>
-                          </div>
-                        </article>
-                      )}
+                              </div>
+
+                              <div class="context-card-footer">
+                                <div class="chip-row">
+                                  {context.scope.workspace ? (
+                                    <span class="scope-chip">
+                                      {context.scope.workspace}
+                                    </span>
+                                  ) : null}
+                                  <For each={context.scope.tools}>
+                                    {(tool) => (
+                                      <span class="scope-chip">{tool}</span>
+                                    )}
+                                  </For>
+                                </div>
+                                <span class="timestamp">
+                                  {formatTimestamp(context.updatedAt)}
+                                </span>
+                              </div>
+                            </article>
+                          </button>
+                        );
+                      }}
                     </For>
                   ) : (
                     <p class="empty-copy">{section.emptyState}</p>
@@ -152,24 +178,37 @@ export function App() {
             <div>
               <p class="eyebrow">Active context</p>
               <h2>{activeContext()?.title}</h2>
+              <p class="thread-summary">{activeContext()?.summary}</p>
             </div>
             <div class="header-badges">
               <span class="context-badge">
                 {getContextStateLabel(activeContext()?.state ?? "idle")}
               </span>
               <span class="context-badge context-badge-ghost">
-                {sampleInboxViewModel.routeLabel}
+                {getRouteStrategyLabel(routeDecision().strategy)}
               </span>
             </div>
           </div>
 
+          {pendingPrompt() ? (
+            <section class="pending-card">
+              <p class="route-title">Pending input</p>
+              <p>{pendingPrompt()?.prompt}</p>
+            </section>
+          ) : null}
+
           <div class="route-callout">
             <p class="route-title">Routed from the inbox</p>
-            <p>{sampleInboxViewModel.routeDecision.rationale}</p>
+            <p class="route-headline">
+              {routeTarget()
+                ? `${getRouteStrategyLabel(routeDecision().strategy)} → ${routeTarget()?.title}`
+                : getRouteStrategyLabel(routeDecision().strategy)}
+            </p>
+            <p>{routeDecision().rationale}</p>
           </div>
 
           <div class="transcript">
-            <For each={sampleInboxViewModel.transcript}>
+            <For each={activeContext()?.transcript ?? []}>
               {(turn) => (
                 <article class={`message message-${turn.role}`}>
                   <div class="message-meta">
@@ -188,12 +227,49 @@ export function App() {
               <h3>Reply from anywhere. The system routes it.</h3>
             </div>
 
-            <div class="composer-frame" aria-hidden="true">
-              <span class="composer-placeholder">
-                Use OpenCode as the runtime, but keep the user in one window.
-              </span>
-              <button type="button">Route intelligently</button>
-            </div>
+            <form
+              class="composer-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                inbox.submitDraft();
+              }}
+            >
+              <textarea
+                class="composer-input"
+                name="prompt"
+                placeholder={
+                  pendingPrompt()?.prompt ??
+                  "Type naturally. The system decides whether this continues, revives, answers, or starts."
+                }
+                rows={4}
+                value={inbox.draft()}
+                onInput={(event) => inbox.setDraft(event.currentTarget.value)}
+              />
+
+              <div class="composer-actions">
+                <div class="suggestion-row">
+                  <For each={demoPrompts}>
+                    {(prompt) => (
+                      <button
+                        class="suggestion-chip"
+                        type="button"
+                        onClick={() => inbox.setDraft(prompt)}
+                      >
+                        {prompt}
+                      </button>
+                    )}
+                  </For>
+                </div>
+
+                <button
+                  class="submit-button"
+                  disabled={!inbox.canSubmit()}
+                  type="submit"
+                >
+                  Route message
+                </button>
+              </div>
+            </form>
           </footer>
         </section>
       </main>
