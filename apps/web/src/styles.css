@@ -1,0 +1,477 @@
+:root {
+  color-scheme: dark;
+  --bg: #07131a;
+  --bg-elevated: rgba(11, 25, 33, 0.78);
+  --bg-panel: rgba(16, 35, 46, 0.92);
+  --border: rgba(154, 191, 196, 0.18);
+  --border-strong: rgba(154, 191, 196, 0.3);
+  --text: #edf6f3;
+  --text-muted: #96afb4;
+  --accent: #79d9c6;
+  --accent-warm: #ffc474;
+  --shadow: 0 24px 70px rgba(2, 10, 15, 0.42);
+  font-family:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(48, 115, 129, 0.28),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 85% 12%,
+      rgba(255, 196, 116, 0.18),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #08151d 0%, #050b10 100%);
+  color: var(--text);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 40px 32px 32px;
+}
+
+.ambient {
+  position: absolute;
+  inset: auto;
+  z-index: 0;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 999px;
+  filter: blur(60px);
+  opacity: 0.4;
+}
+
+.ambient-left {
+  top: -8rem;
+  left: -10rem;
+  background: rgba(121, 217, 198, 0.18);
+}
+
+.ambient-right {
+  right: -10rem;
+  bottom: 6rem;
+  background: rgba(255, 196, 116, 0.16);
+}
+
+.topbar,
+.workspace {
+  position: relative;
+  z-index: 1;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto 28px;
+  max-width: 1500px;
+}
+
+.topbar h1,
+.hero-card h2,
+.rail-section h2,
+.thread-header h2,
+.composer-copy h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.topbar h1 {
+  font-size: clamp(2.7rem, 6vw, 4.8rem);
+  line-height: 0.92;
+  max-width: 10ch;
+}
+
+.topbar-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.meta-pill,
+.count-pill,
+.context-badge,
+.state-pill,
+.scope-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.meta-pill {
+  background: rgba(8, 20, 28, 0.72);
+  padding: 10px 14px;
+}
+
+.meta-pill-muted {
+  color: var(--text-muted);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 1500px;
+}
+
+.rail-stack,
+.thread-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.signal-card,
+.rail-section,
+.thread-shell {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
+
+.signal-card,
+.rail-section {
+  border-radius: 28px;
+  padding: 20px;
+}
+
+.hero-card {
+  background:
+    linear-gradient(135deg, rgba(121, 217, 198, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(255, 196, 116, 0.06), rgba(10, 22, 30, 0.86));
+}
+
+.hero-card p,
+.context-card p,
+.route-callout p,
+.message p,
+.composer-copy p,
+.empty-copy {
+  margin: 0;
+}
+
+.hero-card h2 {
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.hero-card > p:last-of-type {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.signal-panel {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(6, 16, 23, 0.52);
+  padding: 14px 16px;
+}
+
+.signal-panel p {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.signal-panel strong {
+  font-size: 1.05rem;
+  text-transform: capitalize;
+}
+
+.section-heading,
+.context-card-header,
+.context-card-footer,
+.thread-header,
+.message-meta,
+.composer-frame {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-heading {
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.rail-section h2 {
+  font-size: 1.35rem;
+}
+
+.count-pill {
+  padding: 7px 10px;
+  color: var(--text-muted);
+}
+
+.context-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.context-card {
+  border: 1px solid rgba(154, 191, 196, 0.12);
+  border-radius: 22px;
+  background: rgba(8, 18, 24, 0.72);
+  padding: 16px;
+}
+
+.context-card-header h3 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.context-card-header p,
+.route-callout p:last-child,
+.message p,
+.empty-copy,
+.composer-placeholder {
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.context-card-footer {
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scope-chip,
+.state-pill,
+.context-badge {
+  padding: 7px 10px;
+}
+
+.state-pill {
+  align-self: flex-start;
+  background: rgba(121, 217, 198, 0.1);
+}
+
+.timestamp {
+  color: var(--text-muted);
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.thread-shell {
+  border-radius: 32px;
+  min-height: 760px;
+  padding: 28px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(121, 217, 198, 0.08),
+      transparent 26%
+    ),
+    linear-gradient(180deg, rgba(10, 23, 31, 0.96), rgba(6, 12, 17, 0.98));
+}
+
+.thread-header {
+  align-items: flex-start;
+}
+
+.thread-header h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.header-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.context-badge {
+  background: rgba(121, 217, 198, 0.12);
+}
+
+.context-badge-ghost {
+  background: rgba(255, 196, 116, 0.1);
+}
+
+.route-callout {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(7, 15, 21, 0.82);
+  padding: 18px 20px;
+}
+
+.route-title {
+  margin-bottom: 8px;
+  color: var(--accent);
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.transcript {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.message {
+  max-width: 48rem;
+  border-radius: 26px;
+  padding: 18px 20px;
+}
+
+.message-user {
+  align-self: flex-end;
+  border: 1px solid rgba(255, 196, 116, 0.18);
+  background: rgba(72, 49, 19, 0.32);
+}
+
+.message-assistant,
+.message-system {
+  align-self: flex-start;
+  border: 1px solid rgba(121, 217, 198, 0.14);
+  background: rgba(10, 26, 35, 0.76);
+}
+
+.message-meta {
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.composer-shell {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.composer-copy h3 {
+  font-size: 1.45rem;
+  margin-top: 4px;
+}
+
+.composer-frame {
+  min-width: min(100%, 28rem);
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 24px;
+  background: rgba(7, 17, 23, 0.86);
+  padding: 14px 14px 14px 18px;
+}
+
+.composer-frame button {
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), #b3f2d4);
+  color: #062029;
+  cursor: pointer;
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-warm);
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.empty-copy {
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .thread-shell {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 24px 18px 18px;
+  }
+
+  .topbar,
+  .thread-header,
+  .composer-shell,
+  .context-card-footer {
+    flex-direction: column;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-frame {
+    min-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

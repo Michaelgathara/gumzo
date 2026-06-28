@@ -1,0 +1,21 @@
+{
+  "name": "@gumzo/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@gumzo/domain": "workspace:*",
+    "solid-js": "1.9.10"
+  },
+  "devDependencies": {
+    "typescript": "5.8.2",
+    "vite": "7.1.4",
+    "vite-plugin-solid": "2.11.10"
+  }
+}

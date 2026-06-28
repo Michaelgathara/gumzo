@@ -11,9 +11,11 @@ The repo is intentionally set up as a small monorepo so we can evolve the produc
 - `bun` workspaces for package management
 - `turbo` for task orchestration
 - `TypeScript` as the baseline language for shared contracts and app code
+- `Node.js 22.22.3` for the underlying tool runtime expected by Vite and Turbo
 
 ## Getting Started
 
-1. `source ~/.zshrc`
-2. `bun install`
-3. `bun run dev`
+1. `source ~/.nvm/nvm.sh && nvm use`
+2. `source ~/.zshrc`
+3. `bun install`
+4. `bun run dev`
