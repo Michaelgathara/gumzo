@@ -62,4 +62,19 @@ describe("submitInboxMessage", () => {
       "sketch a pricing page information",
     );
   });
+
+  test("drops the new topic prefix when titling a fresh context", () => {
+    const next = submitInboxMessage(
+      sampleInboxState,
+      "New topic: Parent inbox navigation",
+      "2026-06-28T09:15:00.000Z",
+    );
+
+    const createdContext = next.contexts.find(
+      (context) => context.id === "context-6",
+    );
+
+    expect(next.routeDecision.strategy).toBe("start-new");
+    expect(createdContext?.title).toBe("Parent inbox navigation");
+  });
 });

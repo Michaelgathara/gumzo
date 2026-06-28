@@ -434,6 +434,8 @@ function resolveTargetTitle(state: InboxState, contextId: string) {
 function createContextTitle(message: string) {
   const base = message
     .replace(/^new:\s*/i, "")
+    .replace(/^new topic:\s*/i, "")
+    .replace(/^new topic\s*/i, "")
     .replace(/^start new\s*/i, "")
     .trim();
 
