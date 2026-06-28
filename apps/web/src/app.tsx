@@ -6,6 +6,7 @@ import {
 } from "@gumzo/domain";
 import { For, createMemo } from "solid-js";
 
+import { createDefaultInboxRegistry } from "./create-default-inbox-registry";
 import { createInboxStore } from "./create-inbox-store";
 
 type RailSection = {
@@ -49,7 +50,7 @@ const demoPrompts = [
 ] as const;
 
 export function App() {
-  const inbox = createInboxStore();
+  const inbox = createInboxStore(createDefaultInboxRegistry());
   const rail = createMemo(() =>
     groupContextsByRailBucket(inbox.inbox().contexts),
   );

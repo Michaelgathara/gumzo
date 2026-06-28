@@ -1,5 +1,5 @@
 import { createMemoryInboxRegistry, type InboxRegistry } from "@gumzo/inbox";
-import { createMemo, createSignal, onCleanup } from "solid-js";
+import { createMemo, createSignal, onCleanup, onMount } from "solid-js";
 
 export function createInboxStore(
   registry: InboxRegistry = createMemoryInboxRegistry(),
@@ -11,7 +11,27 @@ export function createInboxStore(
     setInbox(snapshot);
   });
 
-  onCleanup(unsubscribe);
+  onMount(() => {
+    if (!isConnectableRegistry(registry)) {
+      return;
+    }
+
+    void registry.connect().catch((error) => {
+      console.error("Failed to connect the inbox registry.", error);
+    });
+  });
+
+  onCleanup(() => {
+    unsubscribe();
+
+    if (!isConnectableRegistry(registry)) {
+      return;
+    }
+
+    void registry.disconnect().catch((error) => {
+      console.error("Failed to disconnect the inbox registry.", error);
+    });
+  });
 
   const activeContext = createMemo(() => {
     const current = inbox();
@@ -49,4 +69,18 @@ export function createInboxStore(
     setDraft,
     submitDraft,
   };
+}
+
+function isConnectableRegistry(
+  registry: InboxRegistry,
+): registry is InboxRegistry & {
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+} {
+  return (
+    "connect" in registry &&
+    typeof registry.connect === "function" &&
+    "disconnect" in registry &&
+    typeof registry.disconnect === "function"
+  );
 }

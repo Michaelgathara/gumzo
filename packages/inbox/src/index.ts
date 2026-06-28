@@ -8,6 +8,12 @@ export {
   mapOpenCodeHydrationToInboxState,
   mapOpenCodeSessionToContextThread,
 } from "./opencode-mapper";
+export {
+  createOpenCodeSessionAdapter,
+  type OpenCodeEventSourceFactory,
+  type OpenCodeEventSourceLike,
+  type OpenCodeHttpSessionAdapterOptions,
+} from "./opencode-http";
 export type {
   OpenCodeAdapterEvent,
   OpenCodeDelivery,
