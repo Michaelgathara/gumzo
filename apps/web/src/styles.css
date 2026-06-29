@@ -467,6 +467,33 @@ textarea {
   color: var(--text);
 }
 
+.composer-preview {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(7, 15, 21, 0.72);
+  padding: 16px 18px;
+}
+
+.composer-preview p {
+  margin: 0;
+}
+
+.composer-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.composer-preview .route-headline {
+  margin-top: 6px;
+}
+
+.composer-preview p:last-child {
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
 .transcript {
   display: flex;
   flex: 1;

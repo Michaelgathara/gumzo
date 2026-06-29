@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { sampleInboxState } from "./demo-data";
-import { selectContext, submitInboxMessage } from "./inbox";
+import { previewInboxRoute, selectContext, submitInboxMessage } from "./inbox";
 
 describe("selectContext", () => {
   test("moves focus to the requested context and records a manual route decision", () => {
@@ -76,5 +76,27 @@ describe("submitInboxMessage", () => {
 
     expect(next.routeDecision.strategy).toBe("start-new");
     expect(createdContext?.title).toBe("Parent inbox navigation");
+  });
+});
+
+describe("previewInboxRoute", () => {
+  test("predicts a pending-input reply before submission", () => {
+    const preview = previewInboxRoute(
+      sampleInboxState,
+      "Use Google for the alpha.",
+    );
+
+    expect(preview?.strategy).toBe("answer-pending");
+    expect(preview?.targetContextId).toBe("auth-provider");
+  });
+
+  test("predicts the optimistic context id for fresh work", () => {
+    const preview = previewInboxRoute(
+      sampleInboxState,
+      "New topic: Parent inbox navigation",
+    );
+
+    expect(preview?.strategy).toBe("start-new");
+    expect(preview?.targetContextId).toBe("context-6");
   });
 });

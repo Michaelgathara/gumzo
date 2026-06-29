@@ -152,11 +152,13 @@ export function submitInboxMessage(
     return state;
   }
 
-  const route = determineRoute(state, trimmed);
-  const contextId =
-    route.strategy === "start-new"
-      ? `context-${state.nextContextNumber}`
-      : route.targetContextId;
+  const route = previewInboxRoute(state, trimmed);
+
+  if (!route) {
+    return state;
+  }
+
+  const contextId = route.targetContextId;
   const userTurn = createTurn(
     state.nextTurnNumber,
     "user",
@@ -260,6 +262,27 @@ export function getRouteStrategyLabel(strategy: RouteStrategy) {
     case "start-new":
       return "Start new";
   }
+}
+
+export function previewInboxRoute(
+  state: InboxState,
+  message: string,
+): RouteDecision | undefined {
+  const trimmed = message.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const route = determineRoute(state, trimmed);
+
+  return {
+    ...route,
+    targetContextId:
+      route.strategy === "start-new"
+        ? `context-${state.nextContextNumber}`
+        : route.targetContextId,
+  };
 }
 
 function determineRoute(state: InboxState, message: string): MutableRoute {
@@ -392,7 +415,7 @@ function getContextMatchScore(
   return score;
 }
 
-function createAssistantReply(route: MutableRoute, title: string) {
+function createAssistantReply(route: RouteDecision, title: string) {
   switch (route.strategy) {
     case "answer-pending":
       return `Attached that answer to ${title} and marked the context as running again.`;

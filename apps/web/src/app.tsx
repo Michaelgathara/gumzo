@@ -2,6 +2,7 @@ import {
   getContextStateLabel,
   getRouteStrategyLabel,
   groupContextsByRailBucket,
+  previewInboxRoute,
   type RailBucketKey,
 } from "@gumzo/domain";
 import { For, createMemo } from "solid-js";
@@ -64,6 +65,35 @@ export function App() {
       ),
   );
   const pendingPrompt = createMemo(() => activeContext()?.pendingItems[0]);
+  const draftRouteDecision = createMemo(() =>
+    previewInboxRoute(inbox.inbox(), inbox.draft()),
+  );
+  const draftRouteTarget = createMemo(() => {
+    const draftRoute = draftRouteDecision();
+
+    if (!draftRoute || draftRoute.strategy === "start-new") {
+      return undefined;
+    }
+
+    return inbox
+      .inbox()
+      .contexts.find((context) => context.id === draftRoute.targetContextId);
+  });
+  const draftRouteHeadline = createMemo(() => {
+    const draftRoute = draftRouteDecision();
+
+    if (!draftRoute) {
+      return undefined;
+    }
+
+    if (draftRoute.strategy === "start-new") {
+      return "Start new context";
+    }
+
+    return draftRouteTarget()
+      ? `${getRouteStrategyLabel(draftRoute.strategy)} → ${draftRouteTarget()?.title}`
+      : getRouteStrategyLabel(draftRoute.strategy);
+  });
   const runtimeTarget = createMemo(() =>
     [inbox.runtime.workspace, inbox.runtime.endpoint]
       .filter(Boolean)
@@ -90,6 +120,22 @@ export function App() {
   const waitLabel = createMemo(() =>
     inbox.commandState().wait ? "Waiting..." : "Wait for idle",
   );
+  const submitLabel = createMemo(() => {
+    switch (draftRouteDecision()?.strategy) {
+      case "answer-pending":
+        return "Answer pending context";
+      case "continue-active":
+        return "Continue active context";
+      case "manual-focus":
+        return "Route message";
+      case "revive-context":
+        return "Revive earlier context";
+      case "start-new":
+        return "Start new context";
+      default:
+        return "Route message";
+    }
+  });
 
   return (
     <div class="app-shell">
@@ -342,6 +388,19 @@ export function App() {
                 onInput={(event) => inbox.setDraft(event.currentTarget.value)}
               />
 
+              {draftRouteDecision() ? (
+                <div class="composer-preview">
+                  <div class="composer-preview-header">
+                    <p class="route-title">Route preview</p>
+                    <span class="context-badge context-badge-ghost">
+                      {Math.round(draftRouteDecision()!.confidence * 100)}%
+                    </span>
+                  </div>
+                  <p class="route-headline">{draftRouteHeadline()}</p>
+                  <p>{draftRouteDecision()!.rationale}</p>
+                </div>
+              ) : null}
+
               <div class="composer-actions">
                 <div class="suggestion-row">
                   <For each={demoPrompts}>
@@ -362,7 +421,7 @@ export function App() {
                   disabled={!inbox.canSubmit()}
                   type="submit"
                 >
-                  Route message
+                  {submitLabel()}
                 </button>
               </div>
             </form>
