@@ -6,7 +6,7 @@ import {
 } from "@gumzo/domain";
 import { For, createMemo } from "solid-js";
 
-import { createDefaultInboxRegistry } from "./create-default-inbox-registry";
+import { createDefaultInboxRuntime } from "./create-default-inbox-registry";
 import { createInboxStore } from "./create-inbox-store";
 
 type RailSection = {
@@ -50,7 +50,7 @@ const demoPrompts = [
 ] as const;
 
 export function App() {
-  const inbox = createInboxStore(createDefaultInboxRegistry());
+  const inbox = createInboxStore(createDefaultInboxRuntime());
   const rail = createMemo(() =>
     groupContextsByRailBucket(inbox.inbox().contexts),
   );
@@ -64,6 +64,32 @@ export function App() {
       ),
   );
   const pendingPrompt = createMemo(() => activeContext()?.pendingItems[0]);
+  const runtimeTarget = createMemo(() =>
+    [inbox.runtime.workspace, inbox.runtime.endpoint]
+      .filter(Boolean)
+      .join(" · "),
+  );
+  const runtimeStatusLabel = createMemo(() => {
+    switch (inbox.runtimeStatus()) {
+      case "connected":
+        return "Connected";
+      case "connecting":
+        return "Connecting";
+      case "demo":
+        return "Demo";
+      case "error":
+        return "Attention";
+    }
+  });
+  const compactLabel = createMemo(() =>
+    inbox.commandState().compact ? "Compacting..." : "Compact",
+  );
+  const interruptLabel = createMemo(() =>
+    inbox.commandState().interrupt ? "Interrupting..." : "Interrupt",
+  );
+  const waitLabel = createMemo(() =>
+    inbox.commandState().wait ? "Waiting..." : "Wait for idle",
+  );
 
   return (
     <div class="app-shell">
@@ -77,8 +103,8 @@ export function App() {
         </div>
 
         <div class="topbar-meta">
-          <span class="meta-pill">OpenCode-aligned runtime</span>
-          <span class="meta-pill meta-pill-muted">Scaffold slice 02</span>
+          <span class="meta-pill">{inbox.runtime.label}</span>
+          <span class="meta-pill meta-pill-muted">{runtimeStatusLabel()}</span>
         </div>
       </header>
 
@@ -190,6 +216,75 @@ export function App() {
               </span>
             </div>
           </div>
+
+          <section class="runtime-panel">
+            <div class="runtime-panel-header">
+              <div>
+                <p class="eyebrow">Runtime</p>
+                <h3>{inbox.runtime.label}</h3>
+                <p class="runtime-copy">
+                  {runtimeTarget()
+                    ? runtimeTarget()
+                    : "The inbox is currently running against the local demo registry."}
+                </p>
+              </div>
+
+              <div class="runtime-badges">
+                <span class="context-badge">{runtimeStatusLabel()}</span>
+                {activeContext()?.id ? (
+                  <span class="context-badge context-badge-ghost">
+                    {activeContext()?.id}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <div class="runtime-actions">
+              <button
+                class="runtime-button runtime-button-secondary"
+                disabled={!inbox.canInterruptActiveContext()}
+                type="button"
+                onClick={() => void inbox.interruptActiveContext()}
+              >
+                {interruptLabel()}
+              </button>
+
+              <button
+                class="runtime-button runtime-button-secondary"
+                disabled={!inbox.canWaitForActiveContext()}
+                type="button"
+                onClick={() => void inbox.waitForActiveContext()}
+              >
+                {waitLabel()}
+              </button>
+
+              <button
+                class="runtime-button runtime-button-secondary"
+                disabled={!inbox.canCompactActiveContext()}
+                type="button"
+                onClick={() => void inbox.compactActiveContext()}
+              >
+                {compactLabel()}
+              </button>
+
+              {inbox.runtime.kind === "opencode" ? (
+                <button
+                  class="runtime-button"
+                  disabled={inbox.runtimeStatus() === "connecting"}
+                  type="button"
+                  onClick={() => void inbox.reconnectRuntime()}
+                >
+                  {inbox.runtimeStatus() === "connecting"
+                    ? "Connecting..."
+                    : "Reconnect"}
+                </button>
+              ) : null}
+            </div>
+
+            {inbox.runtimeError() ? (
+              <p class="runtime-error">{inbox.runtimeError()}</p>
+            ) : null}
+          </section>
 
           {pendingPrompt() ? (
             <section class="pending-card">

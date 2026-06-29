@@ -369,11 +369,86 @@ textarea {
 }
 
 .pending-card,
-.route-callout {
+.route-callout,
+.runtime-panel {
   border: 1px solid var(--border);
   border-radius: 24px;
   background: rgba(7, 15, 21, 0.82);
   padding: 18px 20px;
+}
+
+.runtime-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background:
+    linear-gradient(135deg, rgba(121, 217, 198, 0.08), transparent 45%),
+    rgba(7, 15, 21, 0.86);
+}
+
+.runtime-panel-header,
+.runtime-actions,
+.runtime-badges {
+  display: flex;
+  gap: 12px;
+}
+
+.runtime-panel-header,
+.runtime-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.runtime-panel h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.runtime-copy {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.runtime-badges {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.runtime-actions {
+  flex-wrap: wrap;
+}
+
+.runtime-button {
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), #b3f2d4);
+  color: #062029;
+  cursor: pointer;
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  text-transform: uppercase;
+}
+
+.runtime-button-secondary {
+  border: 1px solid var(--border);
+  background: rgba(7, 17, 23, 0.86);
+  color: var(--text);
+}
+
+.runtime-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.runtime-error {
+  margin: 0;
+  color: #ffb5a0;
+  line-height: 1.5;
 }
 
 .route-title {
@@ -540,9 +615,15 @@ textarea {
 
   .topbar,
   .thread-header,
+  .runtime-panel-header,
   .composer-actions,
   .context-card-footer {
     flex-direction: column;
+  }
+
+  .runtime-actions,
+  .runtime-button {
+    width: 100%;
   }
 
   .hero-grid {

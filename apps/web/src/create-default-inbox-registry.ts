@@ -5,11 +5,27 @@ import {
   type InboxRegistry,
 } from "@gumzo/inbox";
 
-export function createDefaultInboxRegistry(): InboxRegistry {
+export type InboxRuntimeDescriptor = {
+  registry: InboxRegistry;
+  runtime: {
+    endpoint?: string;
+    kind: "memory" | "opencode";
+    label: string;
+    workspace?: string;
+  };
+};
+
+export function createDefaultInboxRuntime(): InboxRuntimeDescriptor {
   const baseUrl = readEnv("VITE_OPENCODE_BASE_URL");
 
   if (!baseUrl) {
-    return createMemoryInboxRegistry();
+    return {
+      registry: createMemoryInboxRegistry(),
+      runtime: {
+        kind: "memory",
+        label: "Demo memory registry",
+      },
+    };
   }
 
   const adapter = createOpenCodeSessionAdapter({
@@ -19,13 +35,22 @@ export function createDefaultInboxRegistry(): InboxRegistry {
     subpath: readEnv("VITE_OPENCODE_SUBPATH"),
     workspaceID: readEnv("VITE_OPENCODE_WORKSPACE_ID"),
   });
-
-  return createSessionBackedInboxRegistry({
+  const registry = createSessionBackedInboxRegistry({
     adapter,
     onCommandError(error, command) {
       console.error(`OpenCode ${command} failed.`, error);
     },
   });
+
+  return {
+    registry,
+    runtime: {
+      endpoint: baseUrl,
+      kind: "opencode",
+      label: "OpenCode session runtime",
+      workspace: readEnv("VITE_OPENCODE_WORKSPACE_ID"),
+    },
+  };
 }
 
 function readEnv(name: keyof ImportMetaEnv) {
