@@ -1,6 +1,10 @@
 import {
+  getChildContexts,
+  getContextLineage,
   getContextStateLabel,
+  getParentContext,
   getRouteStrategyLabel,
+  getWaitingContexts,
   groupContextsByRailBucket,
   previewInboxRoute,
   type RailBucketKey,
@@ -52,19 +56,54 @@ const demoPrompts = [
 
 export function App() {
   const inbox = createInboxStore(createDefaultInboxRuntime());
+  const currentState = createMemo(() => inbox.inbox());
   const rail = createMemo(() =>
-    groupContextsByRailBucket(inbox.inbox().contexts),
+    groupContextsByRailBucket(currentState().contexts),
   );
   const activeContext = inbox.activeContext;
   const routeDecision = createMemo(() => inbox.inbox().routeDecision);
   const routeTarget = createMemo(() =>
-    inbox
-      .inbox()
-      .contexts.find(
-        (context) => context.id === routeDecision().targetContextId,
-      ),
+    currentState().contexts.find(
+      (context) => context.id === routeDecision().targetContextId,
+    ),
   );
   const pendingPrompt = createMemo(() => activeContext()?.pendingItems[0]);
+  const waitingContexts = createMemo(() => getWaitingContexts(currentState()));
+  const branchedContextCount = createMemo(
+    () =>
+      currentState().contexts.filter((context) => context.parentContextId)
+        .length,
+  );
+  const activeParent = createMemo(() => {
+    const context = activeContext();
+
+    return context ? getParentContext(currentState(), context.id) : undefined;
+  });
+  const activeChildren = createMemo(() => {
+    const context = activeContext();
+
+    return context ? getChildContexts(currentState(), context.id) : [];
+  });
+  const activeLineage = createMemo(() => {
+    const context = activeContext();
+
+    return context ? getContextLineage(currentState(), context.id) : [];
+  });
+  const activeRelationLabel = createMemo(() => {
+    if (activeParent() && activeChildren().length > 0) {
+      return "Branched context";
+    }
+
+    if (activeParent()) {
+      return "Child context";
+    }
+
+    if (activeChildren().length > 0) {
+      return "Root context";
+    }
+
+    return "Standalone context";
+  });
   const draftRouteDecision = createMemo(() =>
     previewInboxRoute(inbox.inbox(), inbox.draft()),
   );
@@ -139,13 +178,10 @@ export function App() {
 
   return (
     <div class="app-shell">
-      <div class="ambient ambient-left" />
-      <div class="ambient ambient-right" />
-
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Gumzo prototype</p>
-          <h1>One inbox. Many contexts.</h1>
+        <div class="topbar-copy">
+          <p class="eyebrow">Gumzo</p>
+          <h1>Inbox</h1>
         </div>
 
         <div class="topbar-meta">
@@ -156,13 +192,11 @@ export function App() {
 
       <main class="workspace">
         <aside class="rail-stack">
-          <section class="signal-card hero-card">
-            <p class="eyebrow">Design thesis</p>
-            <h2>Users should not manage sessions.</h2>
+          <section class="signal-card sidebar-intro">
+            <p class="eyebrow">Unified Inbox</p>
+            <h2>One visible conversation.</h2>
             <p>
-              The visible interface is one conversation. The system keeps
-              multiple hidden contexts with their own memory, tool scope, and
-              execution state.
+              Context routing, memory, and execution stay in the background.
             </p>
             <div class="hero-grid">
               <Signal
@@ -173,6 +207,11 @@ export function App() {
                 label="Confidence"
                 value={`${Math.round(routeDecision().confidence * 100)}%`}
               />
+              <Signal
+                label="Waiting"
+                value={String(waitingContexts().length)}
+              />
+              <Signal label="Branches" value={String(branchedContextCount())} />
             </div>
           </section>
 
@@ -194,6 +233,9 @@ export function App() {
                         const isActive = createMemo(
                           () => activeContext()?.id === context.id,
                         );
+                        const parentContext = createMemo(() =>
+                          getParentContext(currentState(), context.id),
+                        );
 
                         return (
                           <button
@@ -209,6 +251,11 @@ export function App() {
                                 <div>
                                   <h3>{context.title}</h3>
                                   <p>{context.summary}</p>
+                                  {parentContext() ? (
+                                    <p class="context-relation">
+                                      Branched from {parentContext()!.title}
+                                    </p>
+                                  ) : null}
                                 </div>
                                 <span class="state-pill">
                                   {getContextStateLabel(context.state)}
@@ -247,128 +294,222 @@ export function App() {
         </aside>
 
         <section class="thread-shell">
-          <div class="thread-header">
-            <div>
-              <p class="eyebrow">Active context</p>
-              <h2>{activeContext()?.title}</h2>
-              <p class="thread-summary">{activeContext()?.summary}</p>
-            </div>
-            <div class="header-badges">
-              <span class="context-badge">
-                {getContextStateLabel(activeContext()?.state ?? "idle")}
-              </span>
-              <span class="context-badge context-badge-ghost">
-                {getRouteStrategyLabel(routeDecision().strategy)}
-              </span>
-            </div>
-          </div>
-
-          <section class="runtime-panel">
-            <div class="runtime-panel-header">
+          <div class="thread-column">
+            <div class="thread-header">
               <div>
-                <p class="eyebrow">Runtime</p>
-                <h3>{inbox.runtime.label}</h3>
-                <p class="runtime-copy">
-                  {runtimeTarget()
-                    ? runtimeTarget()
-                    : "The inbox is currently running against the local demo registry."}
-                </p>
+                <p class="eyebrow">Active context</p>
+                <h2>{activeContext()?.title}</h2>
+                <p class="thread-summary">{activeContext()?.summary}</p>
+              </div>
+              <div class="header-badges">
+                <span class="context-badge">
+                  {getContextStateLabel(activeContext()?.state ?? "idle")}
+                </span>
+                <span class="context-badge context-badge-ghost">
+                  {getRouteStrategyLabel(routeDecision().strategy)}
+                </span>
+              </div>
+            </div>
+
+            <div class="thread-meta-grid">
+              <section class="thread-meta-card">
+                <div class="thread-meta-header">
+                  <div>
+                    <p class="eyebrow">Context graph</p>
+                    <h3>{activeRelationLabel()}</h3>
+                  </div>
+                  <span class="context-badge">
+                    {activeChildren().length} branch
+                    {activeChildren().length === 1 ? "" : "es"}
+                  </span>
+                </div>
+
+                <div class="lineage-trail">
+                  <For each={activeLineage()}>
+                    {(context) => (
+                      <button
+                        class="lineage-node"
+                        classList={{
+                          "lineage-node-active":
+                            context.id === activeContext()?.id,
+                        }}
+                        type="button"
+                        onClick={() => inbox.focusContext(context.id)}
+                      >
+                        {context.title}
+                      </button>
+                    )}
+                  </For>
+                </div>
+
+                {activeChildren().length > 0 ? (
+                  <div class="related-contexts">
+                    <For each={activeChildren()}>
+                      {(context) => (
+                        <button
+                          class="related-context-button"
+                          type="button"
+                          onClick={() => inbox.focusContext(context.id)}
+                        >
+                          {context.title}
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                ) : (
+                  <p class="meta-copy">
+                    {activeParent()
+                      ? `This branch came from ${activeParent()!.title}.`
+                      : "This context is currently standalone."}
+                  </p>
+                )}
+              </section>
+
+              <section class="thread-meta-card">
+                <div class="thread-meta-header">
+                  <div>
+                    <p class="eyebrow">Waiting on you</p>
+                    <h3>
+                      {waitingContexts().length === 0
+                        ? "No blocked contexts"
+                        : `${waitingContexts().length} context${
+                            waitingContexts().length === 1 ? "" : "s"
+                          } need input`}
+                    </h3>
+                  </div>
+                  <span class="context-badge context-badge-ghost">
+                    {waitingContexts().length}
+                  </span>
+                </div>
+
+                {waitingContexts().length > 0 ? (
+                  <div class="pending-context-list">
+                    <For each={waitingContexts().slice(0, 3)}>
+                      {(context) => (
+                        <button
+                          class="pending-context-button"
+                          type="button"
+                          onClick={() => inbox.focusContext(context.id)}
+                        >
+                          <strong>{context.title}</strong>
+                          <span>
+                            {context.pendingItems[0]?.prompt ??
+                              "Open question is waiting for a response."}
+                          </span>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                ) : (
+                  <p class="meta-copy">
+                    Nothing across the inbox is currently waiting for the user.
+                  </p>
+                )}
+              </section>
+            </div>
+
+            <section class="runtime-panel">
+              <div class="runtime-panel-header">
+                <div>
+                  <p class="eyebrow">Runtime</p>
+                  <h3>{inbox.runtime.label}</h3>
+                  <p class="runtime-copy">
+                    {runtimeTarget()
+                      ? runtimeTarget()
+                      : "The inbox is currently running against the local demo registry."}
+                  </p>
+                </div>
+
+                <div class="runtime-badges">
+                  <span class="context-badge">{runtimeStatusLabel()}</span>
+                  {activeContext()?.id ? (
+                    <span class="context-badge context-badge-ghost">
+                      {activeContext()?.id}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
-              <div class="runtime-badges">
-                <span class="context-badge">{runtimeStatusLabel()}</span>
-                {activeContext()?.id ? (
-                  <span class="context-badge context-badge-ghost">
-                    {activeContext()?.id}
-                  </span>
+              <div class="runtime-actions">
+                <button
+                  class="runtime-button runtime-button-secondary"
+                  disabled={!inbox.canInterruptActiveContext()}
+                  type="button"
+                  onClick={() => void inbox.interruptActiveContext()}
+                >
+                  {interruptLabel()}
+                </button>
+
+                <button
+                  class="runtime-button runtime-button-secondary"
+                  disabled={!inbox.canWaitForActiveContext()}
+                  type="button"
+                  onClick={() => void inbox.waitForActiveContext()}
+                >
+                  {waitLabel()}
+                </button>
+
+                <button
+                  class="runtime-button runtime-button-secondary"
+                  disabled={!inbox.canCompactActiveContext()}
+                  type="button"
+                  onClick={() => void inbox.compactActiveContext()}
+                >
+                  {compactLabel()}
+                </button>
+
+                {inbox.runtime.kind === "opencode" ? (
+                  <button
+                    class="runtime-button"
+                    disabled={inbox.runtimeStatus() === "connecting"}
+                    type="button"
+                    onClick={() => void inbox.reconnectRuntime()}
+                  >
+                    {inbox.runtimeStatus() === "connecting"
+                      ? "Connecting..."
+                      : "Reconnect"}
+                  </button>
                 ) : null}
               </div>
-            </div>
 
-            <div class="runtime-actions">
-              <button
-                class="runtime-button runtime-button-secondary"
-                disabled={!inbox.canInterruptActiveContext()}
-                type="button"
-                onClick={() => void inbox.interruptActiveContext()}
-              >
-                {interruptLabel()}
-              </button>
-
-              <button
-                class="runtime-button runtime-button-secondary"
-                disabled={!inbox.canWaitForActiveContext()}
-                type="button"
-                onClick={() => void inbox.waitForActiveContext()}
-              >
-                {waitLabel()}
-              </button>
-
-              <button
-                class="runtime-button runtime-button-secondary"
-                disabled={!inbox.canCompactActiveContext()}
-                type="button"
-                onClick={() => void inbox.compactActiveContext()}
-              >
-                {compactLabel()}
-              </button>
-
-              {inbox.runtime.kind === "opencode" ? (
-                <button
-                  class="runtime-button"
-                  disabled={inbox.runtimeStatus() === "connecting"}
-                  type="button"
-                  onClick={() => void inbox.reconnectRuntime()}
-                >
-                  {inbox.runtimeStatus() === "connecting"
-                    ? "Connecting..."
-                    : "Reconnect"}
-                </button>
+              {inbox.runtimeError() ? (
+                <p class="runtime-error">{inbox.runtimeError()}</p>
               ) : null}
+            </section>
+
+            {pendingPrompt() ? (
+              <section class="pending-card">
+                <p class="route-title">Pending input</p>
+                <p>{pendingPrompt()?.prompt}</p>
+              </section>
+            ) : null}
+
+            <div class="route-callout">
+              <p class="route-title">Route preview</p>
+              <p class="route-headline">
+                {routeTarget()
+                  ? `${getRouteStrategyLabel(routeDecision().strategy)} → ${routeTarget()?.title}`
+                  : getRouteStrategyLabel(routeDecision().strategy)}
+              </p>
+              <p>{routeDecision().rationale}</p>
             </div>
 
-            {inbox.runtimeError() ? (
-              <p class="runtime-error">{inbox.runtimeError()}</p>
-            ) : null}
-          </section>
-
-          {pendingPrompt() ? (
-            <section class="pending-card">
-              <p class="route-title">Pending input</p>
-              <p>{pendingPrompt()?.prompt}</p>
-            </section>
-          ) : null}
-
-          <div class="route-callout">
-            <p class="route-title">Routed from the inbox</p>
-            <p class="route-headline">
-              {routeTarget()
-                ? `${getRouteStrategyLabel(routeDecision().strategy)} → ${routeTarget()?.title}`
-                : getRouteStrategyLabel(routeDecision().strategy)}
-            </p>
-            <p>{routeDecision().rationale}</p>
-          </div>
-
-          <div class="transcript">
-            <For each={activeContext()?.transcript ?? []}>
-              {(turn) => (
-                <article class={`message message-${turn.role}`}>
-                  <div class="message-meta">
-                    <span>{turn.author}</span>
-                    <time>{formatTimestamp(turn.timestamp)}</time>
-                  </div>
-                  <p>{turn.body}</p>
-                </article>
-              )}
-            </For>
+            <div class="transcript">
+              <For each={activeContext()?.transcript ?? []}>
+                {(turn) => (
+                  <article class={`message message-${turn.role}`}>
+                    <div class="message-meta">
+                      <span>{turn.author}</span>
+                      <time>{formatTimestamp(turn.timestamp)}</time>
+                    </div>
+                    <p>{turn.body}</p>
+                  </article>
+                )}
+              </For>
+            </div>
           </div>
 
           <footer class="composer-shell">
-            <div class="composer-copy">
-              <p class="eyebrow">Unified composer</p>
-              <h3>Reply from anywhere. The system routes it.</h3>
-            </div>
-
             <form
               class="composer-form"
               onSubmit={(event) => {
@@ -381,7 +522,7 @@ export function App() {
                 name="prompt"
                 placeholder={
                   pendingPrompt()?.prompt ??
-                  "Type naturally. The system decides whether this continues, revives, answers, or starts."
+                  "Message Gumzo. The runtime decides whether this continues, revives, answers, or starts."
                 }
                 rows={4}
                 value={inbox.draft()}
@@ -391,12 +532,11 @@ export function App() {
               {draftRouteDecision() ? (
                 <div class="composer-preview">
                   <div class="composer-preview-header">
-                    <p class="route-title">Route preview</p>
+                    <p class="route-title">{draftRouteHeadline()}</p>
                     <span class="context-badge context-badge-ghost">
                       {Math.round(draftRouteDecision()!.confidence * 100)}%
                     </span>
                   </div>
-                  <p class="route-headline">{draftRouteHeadline()}</p>
                   <p>{draftRouteDecision()!.rationale}</p>
                 </div>
               ) : null}

@@ -265,6 +265,7 @@ describe("createOpenCodeSessionAdapter", () => {
         workspaceID: "gumzo",
       },
       model: "gpt-5",
+      parentID: "ses_gumzo",
       subpath: "packages/inbox",
     });
 
@@ -290,6 +291,7 @@ describe("createOpenCodeSessionAdapter", () => {
         workspaceID: "gumzo",
       },
       model: "gpt-5",
+      parentID: "ses_gumzo",
       subpath: "packages/inbox",
     });
   });
@@ -568,6 +570,7 @@ function createFetchStub(
 function createSessionInfo(input: {
   id: string;
   location?: OpenCodeSessionInfo["location"];
+  parentID?: string;
   subpath?: string;
   title: string;
   updatedAt: string;
@@ -575,6 +578,7 @@ function createSessionInfo(input: {
   return {
     id: input.id,
     location: input.location,
+    parentID: input.parentID,
     subpath: input.subpath,
     time: {
       created: "2026-06-28T09:00:00.000Z",

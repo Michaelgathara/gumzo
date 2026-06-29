@@ -75,6 +75,7 @@ export type OpenCodeSessionCreateCommand = {
   id?: OpenCodeSessionID;
   location?: OpenCodeSessionInfo["location"];
   model?: string;
+  parentID?: OpenCodeSessionID;
   subpath?: string;
 };
 

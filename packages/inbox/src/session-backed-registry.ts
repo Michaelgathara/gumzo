@@ -92,6 +92,7 @@ export function createSessionBackedInboxRegistry(
     try {
       const created = await options.adapter.createSession({
         location: seedSession?.info.location,
+        parentID: seedSession?.info.id,
         subpath: seedSession?.info.subpath,
       });
 
@@ -293,6 +294,8 @@ function adoptCreatedSession(
   const mergedContext = {
     ...createdContext,
     id: created.info.id,
+    parentContextId:
+      createdContext.parentContextId ?? optimisticContext.parentContextId,
     pendingItems:
       optimisticContext.pendingItems.length > 0
         ? optimisticContext.pendingItems

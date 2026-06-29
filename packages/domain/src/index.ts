@@ -1,7 +1,11 @@
 export {
   getActiveContext,
+  getChildContexts,
+  getContextLineage,
   getContextStateLabel,
+  getParentContext,
   getRouteStrategyLabel,
+  getWaitingContexts,
   groupContextsByRailBucket,
   inboxStateSchema,
   previewInboxRoute,

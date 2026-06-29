@@ -53,6 +53,7 @@ export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>;
 
 export const contextSummarySchema = z.object({
   id: z.string().min(1),
+  parentContextId: z.string().min(1).optional(),
   title: z.string().min(1),
   summary: z.string().min(1),
   state: contextStateSchema,
@@ -106,7 +107,7 @@ export function groupContextsByRailBucket(contexts: ContextSummary[]) {
   };
 
   for (const context of contexts.toSorted(sortByUpdatedAtDescending)) {
-    grouped[toRailBucket(context.state)].push(context);
+    grouped[toRailBucket(context)].push(context);
   }
 
   return grouped satisfies Record<RailBucketKey, ContextSummary[]>;
@@ -117,6 +118,51 @@ export function getActiveContext(state: InboxState) {
     state.contexts.find((context) => context.id === state.activeContextId) ??
     state.contexts[0]
   );
+}
+
+export function getParentContext(state: InboxState, contextId: string) {
+  const context = state.contexts.find(
+    (candidate) => candidate.id === contextId,
+  );
+
+  if (!context?.parentContextId) {
+    return undefined;
+  }
+
+  return state.contexts.find(
+    (candidate) => candidate.id === context.parentContextId,
+  );
+}
+
+export function getChildContexts(state: InboxState, contextId: string) {
+  return state.contexts
+    .filter((context) => context.parentContextId === contextId)
+    .toSorted(sortByUpdatedAtDescending);
+}
+
+export function getContextLineage(state: InboxState, contextId: string) {
+  const lineage: ContextThread[] = [];
+  const contextsById = new Map(
+    state.contexts.map((context) => [context.id, context] as const),
+  );
+  const visited = new Set<string>();
+  let current = contextsById.get(contextId);
+
+  while (current && !visited.has(current.id)) {
+    lineage.unshift(current);
+    visited.add(current.id);
+    current = current.parentContextId
+      ? contextsById.get(current.parentContextId)
+      : undefined;
+  }
+
+  return lineage;
+}
+
+export function getWaitingContexts(state: InboxState) {
+  return state.contexts
+    .filter((context) => context.pendingItems.length > 0)
+    .toSorted(sortByUpdatedAtDescending);
 }
 
 export function selectContext(
@@ -159,6 +205,7 @@ export function submitInboxMessage(
   }
 
   const contextId = route.targetContextId;
+  const activeContext = getActiveContext(state);
   const userTurn = createTurn(
     state.nextTurnNumber,
     "user",
@@ -181,6 +228,7 @@ export function submitInboxMessage(
     );
     const newContext: ContextThread = {
       id: contextId,
+      parentContextId: activeContext?.id,
       title,
       summary: `Started from the inbox: ${toSummarySnippet(trimmed)}`,
       state: "running",
@@ -363,7 +411,7 @@ function findPendingAnswerCandidate(
   normalizedMessage: string,
 ) {
   const pendingContexts = state.contexts
-    .filter((context) => context.state === "needs-input")
+    .filter((context) => context.pendingItems.length > 0)
     .toSorted(sortByUpdatedAtDescending);
 
   if (pendingContexts.length !== 1) {
@@ -503,8 +551,12 @@ function toSummarySnippet(value: string) {
   return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-function toRailBucket(state: ContextState): RailBucketKey {
-  switch (state) {
+function toRailBucket(context: ContextSummary): RailBucketKey {
+  if (context.pendingItems.length > 0) {
+    return "needs-you";
+  }
+
+  switch (context.state) {
     case "needs-input":
       return "needs-you";
     case "running":

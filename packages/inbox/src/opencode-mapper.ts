@@ -46,6 +46,7 @@ export function mapOpenCodeSessionToContextThread(
 ): ContextThread {
   return {
     id: session.info.id,
+    parentContextId: session.info.parentID,
     pendingItems: mapPendingItems(session.status, session.todos),
     scope: {
       tools: inferToolScopes(session.messages),
@@ -130,6 +131,14 @@ function mapContextState(session: OpenCodeSessionRecord): ContextState {
 
   if (session.status.type === "busy") {
     return "running";
+  }
+
+  if (
+    session.todos.some(
+      (todo) => todo.status === "pending" && todo.content.includes("?"),
+    )
+  ) {
+    return "needs-input";
   }
 
   const latestAssistant = [...session.messages]
@@ -291,7 +300,7 @@ function resolveActiveContextID(
   }
 
   const preferred =
-    contexts.find((context) => context.state === "needs-input") ??
+    contexts.find((context) => context.pendingItems.length > 0) ??
     contexts.find((context) => context.state === "running") ??
     contexts[0];
 

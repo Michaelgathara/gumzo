@@ -125,6 +125,7 @@ export function createOpenCodeSessionAdapter(
             id: command.id,
             location: resolveCreateSessionLocation(command.location, options),
             model: command.model,
+            parentID: command.parentID,
             subpath: command.subpath ?? options.subpath,
           }),
           method: "POST",
@@ -483,10 +484,7 @@ function trimTrailingSlash(value: string) {
 
 function resolveCreateSessionLocation(
   location: OpenCodeSessionInfo["location"] | undefined,
-  options: Pick<
-    OpenCodeHttpSessionAdapterOptions,
-    "directory" | "workspaceID"
-  >,
+  options: Pick<OpenCodeHttpSessionAdapterOptions, "directory" | "workspaceID">,
 ) {
   const directory = location?.directory ?? options.directory;
   const workspaceID = location?.workspaceID ?? options.workspaceID;

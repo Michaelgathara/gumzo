@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { sampleInboxState } from "./demo-data";
-import { previewInboxRoute, selectContext, submitInboxMessage } from "./inbox";
+import {
+  getChildContexts,
+  getContextLineage,
+  getWaitingContexts,
+  groupContextsByRailBucket,
+  previewInboxRoute,
+  selectContext,
+  submitInboxMessage,
+} from "./inbox";
 
 describe("selectContext", () => {
   test("moves focus to the requested context and records a manual route decision", () => {
@@ -58,6 +66,7 @@ describe("submitInboxMessage", () => {
 
     expect(next.activeContextId).toBe("context-6");
     expect(next.routeDecision.strategy).toBe("start-new");
+    expect(createdContext?.parentContextId).toBe("gumzo-scaffold");
     expect(createdContext?.title).toStartWith(
       "sketch a pricing page information",
     );
@@ -98,5 +107,32 @@ describe("previewInboxRoute", () => {
 
     expect(preview?.strategy).toBe("start-new");
     expect(preview?.targetContextId).toBe("context-6");
+  });
+});
+
+describe("lineage helpers", () => {
+  test("returns the parent chain and child contexts for a branched thread", () => {
+    const lineage = getContextLineage(sampleInboxState, "founder-letter");
+    const children = getChildContexts(sampleInboxState, "gumzo-scaffold");
+
+    expect(lineage.map((context) => context.id)).toEqual([
+      "gumzo-scaffold",
+      "market-scan",
+      "founder-letter",
+    ]);
+    expect(children.map((context) => context.id)).toEqual([
+      "auth-provider",
+      "market-scan",
+    ]);
+  });
+
+  test("treats pending prompts as a first-class waiting queue", () => {
+    const waiting = getWaitingContexts(sampleInboxState);
+    const rail = groupContextsByRailBucket(sampleInboxState.contexts);
+
+    expect(waiting.map((context) => context.id)).toEqual(["auth-provider"]);
+    expect(rail["needs-you"].map((context) => context.id)).toEqual([
+      "auth-provider",
+    ]);
   });
 });

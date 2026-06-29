@@ -82,6 +82,7 @@ describe("createSessionBackedInboxRegistry", () => {
           directory: "/workspace/gumzo",
           workspaceID: "gumzo",
         },
+        parentID: "ses_gumzo",
         subpath: "apps/web",
       },
     );
@@ -95,6 +96,12 @@ describe("createSessionBackedInboxRegistry", () => {
         .getSnapshot()
         .contexts.find((context) => context.id === "ses_new_1")?.title,
     ).toBe("Parent inbox navigation");
+    expect(
+      registry
+        .getSnapshot()
+        .contexts.find((context) => context.id === "ses_new_1")
+        ?.parentContextId,
+    ).toBe("ses_gumzo");
   });
 
   test("refreshes a session when a durable OpenCode event arrives", async () => {
@@ -162,6 +169,7 @@ function createMockAdapter(): MockAdapter {
     sessions: [
       createSessionRecord({
         id: "ses_auth",
+        parentID: "ses_gumzo",
         messages: [
           {
             agent: "Gumzo",
@@ -301,6 +309,7 @@ class MockAdapter implements OpenCodeSessionAdapter {
       id: command.id ?? `ses_new_${this.nextCreatedSession++}`,
       location: command.location,
       messages: [],
+      parentID: command.parentID,
       status: { type: "idle" },
       subpath: command.subpath,
       time: {
@@ -382,6 +391,7 @@ function createSessionRecord(input: {
   id: OpenCodeSessionID;
   location?: OpenCodeSessionRecord["info"]["location"];
   messages: OpenCodeSessionRecord["messages"];
+  parentID?: OpenCodeSessionID;
   status: OpenCodeSessionStatus;
   subpath?: string;
   time: OpenCodeSessionRecord["info"]["time"];
@@ -392,6 +402,7 @@ function createSessionRecord(input: {
     info: {
       id: input.id,
       location: input.location,
+      parentID: input.parentID,
       subpath: input.subpath,
       time: input.time,
       title: input.title,

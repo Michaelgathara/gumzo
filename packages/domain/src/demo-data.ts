@@ -14,6 +14,7 @@ const demoInboxState = {
   contexts: [
     {
       id: "auth-provider",
+      parentContextId: "gumzo-scaffold",
       title: "Auth provider decision",
       summary:
         "Waiting for a choice between passkeys, Google, or a custom email flow before wiring onboarding.",
@@ -93,6 +94,7 @@ const demoInboxState = {
     },
     {
       id: "market-scan",
+      parentContextId: "gumzo-scaffold",
       title: "AI interface market scan",
       summary:
         "Comparing single-window conversational products against traditional multi-thread assistants.",
@@ -151,6 +153,7 @@ const demoInboxState = {
     },
     {
       id: "founder-letter",
+      parentContextId: "market-scan",
       title: "Founder letter draft",
       summary:
         "A completed narrative draft about why AI should feel like a continuous operating layer.",
