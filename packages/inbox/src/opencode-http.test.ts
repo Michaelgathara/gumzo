@@ -245,6 +245,7 @@ describe("createOpenCodeSessionAdapter", () => {
     const adapter = createOpenCodeSessionAdapter({
       baseUrl: "http://localhost:4096",
       fetch,
+      subpath: "apps/web",
       workspaceID: "gumzo",
     });
 
@@ -263,6 +264,8 @@ describe("createOpenCodeSessionAdapter", () => {
         directory: "/workspace/gumzo",
         workspaceID: "gumzo",
       },
+      model: "gpt-5",
+      subpath: "packages/inbox",
     });
 
     expect(session.status.type).toBe("retry");
@@ -286,6 +289,79 @@ describe("createOpenCodeSessionAdapter", () => {
         directory: "/workspace/gumzo",
         workspaceID: "gumzo",
       },
+      model: "gpt-5",
+      subpath: "packages/inbox",
+    });
+  });
+
+  test("applies adapter scope defaults when creating a session", async () => {
+    const requests: RequestSnapshot[] = [];
+    const fetch = createFetchStub(requests, ({ method, pathname }) => {
+      if (method === "POST" && pathname === "/api/session") {
+        return jsonResponse({
+          data: createSessionInfo({
+            id: "ses_new",
+            location: {
+              directory: "/workspace/gumzo",
+              workspaceID: "gumzo",
+            },
+            subpath: "apps/web",
+            title: "New OpenCode session",
+            updatedAt: "2026-06-28T09:36:00.000Z",
+          }),
+        });
+      }
+
+      if (method === "GET" && pathname === "/api/session/ses_new") {
+        return jsonResponse({
+          data: createSessionInfo({
+            id: "ses_new",
+            location: {
+              directory: "/workspace/gumzo",
+              workspaceID: "gumzo",
+            },
+            subpath: "apps/web",
+            title: "New OpenCode session",
+            updatedAt: "2026-06-28T09:36:00.000Z",
+          }),
+        });
+      }
+
+      if (method === "GET" && pathname === "/session/status") {
+        return jsonResponse({
+          ses_new: { type: "idle" },
+        });
+      }
+
+      if (method === "GET" && pathname === "/api/session/ses_new/context") {
+        return jsonResponse({ data: [] satisfies OpenCodeSessionMessage[] });
+      }
+
+      if (method === "GET" && pathname === "/session/ses_new/todo") {
+        return jsonResponse([] satisfies OpenCodeTodo[]);
+      }
+
+      throw new Error(`Unhandled request ${method} ${pathname}`);
+    });
+
+    const adapter = createOpenCodeSessionAdapter({
+      baseUrl: "http://localhost:4096",
+      directory: "/workspace/gumzo",
+      fetch,
+      subpath: "apps/web",
+      workspaceID: "gumzo",
+    });
+
+    await adapter.createSession();
+
+    expect(
+      requests.find((request) => request.pathname === "/api/session")?.body,
+    ).toEqual({
+      location: {
+        directory: "/workspace/gumzo",
+        workspaceID: "gumzo",
+      },
+      subpath: "apps/web",
     });
   });
 

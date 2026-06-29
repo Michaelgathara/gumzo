@@ -123,7 +123,9 @@ export function createOpenCodeSessionAdapter(
           body: JSON.stringify({
             agent: command.agent,
             id: command.id,
-            location: command.location,
+            location: resolveCreateSessionLocation(command.location, options),
+            model: command.model,
+            subpath: command.subpath ?? options.subpath,
           }),
           method: "POST",
         },
@@ -477,6 +479,26 @@ function buildUrl(
 
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function resolveCreateSessionLocation(
+  location: OpenCodeSessionInfo["location"] | undefined,
+  options: Pick<
+    OpenCodeHttpSessionAdapterOptions,
+    "directory" | "workspaceID"
+  >,
+) {
+  const directory = location?.directory ?? options.directory;
+  const workspaceID = location?.workspaceID ?? options.workspaceID;
+
+  if (!directory && !workspaceID) {
+    return undefined;
+  }
+
+  return {
+    directory,
+    workspaceID,
+  } satisfies OpenCodeSessionInfo["location"];
 }
 
 function parseEventPayload(raw: string) {
